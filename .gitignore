@@ -57,3 +57,20 @@ mobile_app/build/
 
 # Logs
 *.log
+
+# Local ML experiments
+analyze_phone_movement.py
+analyze_sensor_gps.py
+analyze_v4.py
+build_phone_dataset_v3.py
+build_phone_dataset_v4.py
+build_phone_dataset_v5.py
+build_phone_dataset_v6.py
+build_phone_dataset_v7.py
+evaluate_v7.py
+train_sequence_cnn_v3.py
+train_sequence_cnn_v31.py
+train_sequence_cnn_v4.py
+train_sequence_cnn_v5.py
+train_sequence_cnn_v6.py
+train_sequence_cnn_v7.py
