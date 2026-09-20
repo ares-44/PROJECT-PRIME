@@ -77,7 +77,8 @@ class PRIMESystem:
         accuracy,
         time_since_update,
         gnss_latitude=None,
-        gnss_longitude=None
+        gnss_longitude=None,
+        step_dt=1.0
     ):
 
         self.step_count += 1
@@ -173,7 +174,7 @@ class PRIMESystem:
             self.mode = "PRIME_DR"
 
             # -----------------------------------------------
-            # CNN V2 inference
+            # CNN V7 inference
             # -----------------------------------------------
 
             prediction = (
@@ -182,13 +183,21 @@ class PRIMESystem:
                 )
             )
 
-            north = float(
+            raw_north = float(
                 prediction[0]
             )
 
-            east = float(
+            raw_east = float(
                 prediction[1]
             )
+
+            # V7 CNN predicts displacement over a 60-sample (6.0s) window.
+            # Scale window displacement to step displacement based on step_dt (e.g. 1.0s).
+            step_dt_clean = step_dt if (step_dt is not None and step_dt > 0) else 1.0
+            step_scale = max(0.01, min(1.0, step_dt_clean / 6.0))
+
+            north = raw_north * step_scale
+            east = raw_east * step_scale
 
             # -----------------------------------------------
             # Update PRIME position

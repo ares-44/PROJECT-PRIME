@@ -35,6 +35,7 @@ class GNSSMonitor:
         if (
             satellites is None
             or accuracy is None
+            or satellites == 0
             or time_since_update >= self.outage_timeout
         ):
 

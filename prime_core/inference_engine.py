@@ -17,35 +17,35 @@ class InferenceEngine:
         model_path = os.path.join(
             base_dir,
             "models",
-            "prime_temporal_cnn_v2.keras"
+            "prime_temporal_cnn_v7.keras"
         )
 
         scaler_path = os.path.join(
             base_dir,
             "models",
-            "prime_sequence_scaler_v2.pkl"
+            "prime_sequence_scaler_v7.pkl"
         )
 
-        print("Loading PRIME CNN V2...")
+        print("Loading PRIME CNN V7...")
 
         self.model = keras.models.load_model(
             model_path
         )
 
-        with open(
-            scaler_path,
-            "rb"
-        ) as f:
+        with open(scaler_path, "rb") as f:
+            scalers = pickle.load(f)
 
-            self.scaler = pickle.load(f)
+        self.sensor_scaler = scalers["sensor_scaler"]
+        self.physics_scaler = scalers["physics_scaler"]
 
         self.last_uncertainty = None
 
-        print("PRIME CNN V2 loaded.")
+        print("PRIME CNN V7 loaded.")
 
     def predict(
         self,
-        sensor_sequence
+        sensor_sequence,
+        physics_input=None
     ):
 
         sensor_sequence = np.asarray(
@@ -53,37 +53,65 @@ class InferenceEngine:
             dtype=np.float32
         )
 
-        # Expected shape:
-        # (60, 12)
-
-        if sensor_sequence.shape != (60, 12):
-
+        if sensor_sequence.shape != (60, 25):
             raise ValueError(
-                f"Expected sensor sequence "
-                f"shape (60, 12), got "
-                f"{sensor_sequence.shape}"
+                f"Expected sensor sequence shape (60, 25), "
+                f"got {sensor_sequence.shape}"
             )
 
-        # Scale each timestep independently
-        original_shape = (
-            sensor_sequence.shape
-        )
+        # ----------------------------------------------------
+        # PHYSICS INPUT
+        # ----------------------------------------------------
 
-        scaled = self.scaler.transform(
+        if physics_input is None:
+
+            # Use the final physics displacement
+            # contained in the V7 feature sequence (channels 20 & 21).
+            physics_input = sensor_sequence[-1, 20:22]
+
+        physics_input = np.asarray(
+            physics_input,
+            dtype=np.float32
+        ).reshape(1, 2)
+
+        # ----------------------------------------------------
+        # SCALE SENSOR DATA
+        # ----------------------------------------------------
+
+        scaled_sensor = self.sensor_scaler.transform(
             sensor_sequence
+        ).reshape(1, 60, 25)
+
+        # ----------------------------------------------------
+        # SCALE PHYSICS INPUT
+        # ----------------------------------------------------
+
+        scaled_physics = self.physics_scaler.transform(
+            physics_input
         )
 
-        scaled = scaled.reshape(
-            original_shape
-        )
+        # ----------------------------------------------------
+        # V7 INFERENCE
+        # ----------------------------------------------------
 
-        # CNN expects batch dimension
         prediction = self.model.predict(
-            scaled[np.newaxis, :, :],
+            [
+                scaled_sensor,
+                scaled_physics
+            ],
             verbose=0
         )[0]
 
-        # Prediction:
-        # [north displacement, east displacement]
+        north = float(prediction[0])
+        east = float(prediction[1])
 
-        return prediction
+        print(
+            f"PRIME V7 prediction: "
+            f"N={north:.3f} m, "
+            f"E={east:.3f} m"
+        )
+
+        return np.array(
+            [north, east],
+            dtype=np.float32
+        )

@@ -39,6 +39,10 @@ class PRIMEAPI:
             initial_longitude
         )
 
+        # Track whether the real phone GNSS position
+        # has been used to establish the PRIME anchor.
+        self.gnss_initialized = False
+
     def process_navigation(
         self,
         sensor_sequence,
@@ -46,7 +50,8 @@ class PRIMEAPI:
         accuracy: Optional[float] = None,
         time_since_update: float = 0.0,
         gnss_latitude: Optional[float] = None,
-        gnss_longitude: Optional[float] = None
+        gnss_longitude: Optional[float] = None,
+        step_dt: float = 1.0
     ):
         """
         Process one navigation update.
@@ -54,7 +59,7 @@ class PRIMEAPI:
         Parameters
         ----------
         sensor_sequence:
-            60 x 12 sensor sequence.
+            60 x 25 PRIME V7 sensor sequence.
 
         satellites:
             Number of visible GNSS satellites.
@@ -70,7 +75,40 @@ class PRIMEAPI:
 
         gnss_longitude:
             Current GNSS longitude if available.
+
+        step_dt:
+            Elapsed time of this step in seconds.
         """
+
+        # ====================================================
+        # INITIAL PHONE GNSS ANCHOR
+        # ====================================================
+        #
+        # If the first request already represents GNSS outage,
+        # use the phone's last known GPS position as the PRIME
+        # starting point before running dead reckoning.
+        #
+        if (
+            not self.gnss_initialized
+            and gnss_latitude is not None
+            and gnss_longitude is not None
+        ):
+
+            self.system.position_engine.reset(
+                gnss_latitude,
+                gnss_longitude
+            )
+
+            self.gnss_initialized = True
+
+            print(
+                "PRIME initial GNSS anchor: "
+                f"{gnss_latitude}, {gnss_longitude}"
+            )
+
+        # ====================================================
+        # PROCESS NAVIGATION
+        # ====================================================
 
         result = self.system.process(
             sensor_sequence=sensor_sequence,
@@ -78,8 +116,19 @@ class PRIMEAPI:
             accuracy=accuracy,
             time_since_update=time_since_update,
             gnss_latitude=gnss_latitude,
-            gnss_longitude=gnss_longitude
+            gnss_longitude=gnss_longitude,
+            step_dt=step_dt
         )
+
+        # If a valid GNSS fix is received later,
+        # consider the system initialized.
+        if (
+            gnss_latitude is not None
+            and gnss_longitude is not None
+            and satellites is not None
+            and satellites > 0
+        ):
+            self.gnss_initialized = True
 
         return self._format_response(
             result
@@ -106,7 +155,10 @@ class PRIMEAPI:
                 self.system.recovery_count,
 
             "step":
-                self.system.step_count
+                self.system.step_count,
+
+            "gnss_initialized":
+                self.gnss_initialized
         }
 
     def reset(
@@ -123,6 +175,8 @@ class PRIMEAPI:
         self.system.mode = "GNSS"
 
         self.system.previous_gnss_state = "GOOD"
+
+        self.gnss_initialized = True
 
         return {
             "success": True,

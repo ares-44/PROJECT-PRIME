@@ -45,12 +45,13 @@ print(
 
 sequence_path = os.path.join(
     BASE_DIR,
-    "data",
-    "prime_sequence_dataset_v2.npz"
+    "ml_model",
+    "prime_phone_dataset_v7.npz"
 )
 
 data = np.load(
-    sequence_path
+    sequence_path,
+    allow_pickle=True
 )
 
 X = data["X"]
@@ -237,18 +238,18 @@ print(
     "\nPROJECT PRIME API STATUS:"
 )
 
-print("✓ PRIME core exposed through API")
+print("[OK] PRIME core exposed through API")
 
-print("✓ Real sensor sequence accepted")
+print("[OK] Real sensor sequence accepted")
 
-print("✓ GNSS mode exposed")
+print("[OK] GNSS mode exposed")
 
-print("✓ PRIME DR mode exposed")
+print("[OK] PRIME DR mode exposed")
 
-print("✓ Recovery exposed")
+print("[OK] Recovery exposed")
 
-print("✓ Position exposed")
+print("[OK] Position exposed")
 
-print("✓ Status endpoint logic ready")
+print("[OK] Status endpoint logic ready")
 
 print("=" * 75)

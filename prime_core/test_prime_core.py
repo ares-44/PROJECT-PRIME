@@ -8,7 +8,7 @@ sys.path.append(
 )
 
 from prime_core.gnss_monitor import GNSSMonitor
-from prime_core.inference_engine import PRIMEInferenceEngine
+from prime_core.inference_engine import InferenceEngine
 from prime_core.position_engine import PositionEngine
 from prime_core.prime_navigation import PRIMENavigation
 
@@ -68,10 +68,7 @@ print("y shape:", y.shape)
 
 print("\nLOADING CNN V2...")
 
-inference_engine = PRIMEInferenceEngine(
-    MODEL_FILE,
-    SCALER_FILE
-)
+inference_engine = InferenceEngine()
 
 print("CNN V2 loaded successfully.")
 

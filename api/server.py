@@ -31,7 +31,7 @@ app = FastAPI(
     title="PROJECT PRIME API",
     description=(
         "AI-powered GNSS-denied navigation "
-        "and dead-reckoning API."
+        "and dead-reckoning API using PRIME Temporal CNN V7."
     ),
     version="1.0.0"
 )
@@ -55,7 +55,7 @@ class SensorData(BaseModel):
 
     sequence: list[list[float]] = Field(
         ...,
-        description="60 x 12 sensor sequence"
+        description="60 x 25 PRIME V7 feature sequence"
     )
 
 
@@ -73,6 +73,8 @@ class NavigationRequest(BaseModel):
 
     gnss_longitude: float | None = None
 
+    step_dt: float = 1.0
+
 
 # ============================================================
 # ROOT
@@ -84,7 +86,8 @@ def root():
     return {
         "project": "PROJECT PRIME",
         "status": "online",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "model": "PRIME Temporal CNN V7"
     }
 
 
@@ -97,7 +100,8 @@ def health():
 
     return {
         "status": "healthy",
-        "project": "PROJECT PRIME"
+        "project": "PROJECT PRIME",
+        "model": "PRIME Temporal CNN V7"
     }
 
 
@@ -136,22 +140,22 @@ def navigate(
     )
 
     # --------------------------------------------------------
-    # Validate shape
+    # Validate V7 shape
     # --------------------------------------------------------
 
-    if sequence.shape != (60, 12):
+    if sequence.shape != (60, 25):
 
         raise HTTPException(
             status_code=400,
             detail=(
                 "Sensor sequence must have "
-                "shape (60, 12). "
+                "shape (60, 25). "
                 f"Received {sequence.shape}."
             )
         )
 
     # --------------------------------------------------------
-    # PRIME inference
+    # PRIME V7 inference
     # --------------------------------------------------------
 
     try:
@@ -171,7 +175,10 @@ def navigate(
                 request.gnss_latitude,
 
             gnss_longitude=
-                request.gnss_longitude
+                request.gnss_longitude,
+
+            step_dt=
+                request.step_dt
         )
 
         return result

@@ -16,3 +16,44 @@ models/*.pkl
 
 models/prime_random_forest_v1.pkl
 mobile_app/build/
+
+# PRIME training data
+api/phone_training_data.csv
+ml_model/*.npz
+
+# PRIME trained models
+models/*.keras
+models/*.h5
+models/*.pkl
+
+# Logs / local analysis outputs
+*.log
+# Private ML experiments / datasets
+ml_model/
+# Secrets
+.env
+.env.*
+
+# Private data
+data/
+ml_model/
+api/phone_training_data.csv
+*.npz
+
+# Trained models
+models/*.keras
+models/*.h5
+models/*.pkl
+
+# Python
+.venv311/
+__pycache__/
+*.pyc
+
+# Flutter
+.dart_tool/
+build/
+mobile_app/build/
+
+# Logs
+*.log
